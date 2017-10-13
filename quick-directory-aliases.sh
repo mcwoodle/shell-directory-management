@@ -2,7 +2,7 @@
 #
 # Quick Directory Aliases
 #
-# Copyright 2011 Matt Woodley
+# Copyright 2011-2017 Matt Woodley
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,97 +16,100 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#NOTE: will be sourced by interactive shell, do not exit!
+# NOTE: will be sourced by interactive shell and will affect the caller's context, do not exit!
 
-mapFile=~/.dmap
-
-touch "$mapFile"
-
-done=false
-curDir=`pwd`
-addDir=false
-removeDir=false
-aliasName=
-finished=false
-
-function usage()
+_d_usage()
 {
-    echo "usage: d [+|-] [alias]" >&2
-    echo ""
-    echo "Add:      d + aliasName"
-    echo "Remove:   d - aliasName"
-    echo "Navigate: d aliasName"
-    echo "List all: d"
-    echo ""
-    echo "Full README: https://tiny.amazon.com/zb62swhm/README"
+    printf "usage: d [+|-] [alias]\n" >&2
+    printf "\n" >&2
+    printf "Add:      d + aliasName\n" >&2
+    printf "Remove:   d - aliasName\n" >&2
+    printf "Navigate: d aliasName\n" >&2
+    printf "List all: d\n" >&2
+    printf "\n" >&2
+    printf "Version: 1.1\n" >&2
+    printf "\n" >&2
+    printf "Full README: https://github.com/mcwoodle/shell-directory-management/blob/master/README.md\n" >&2
 }
 
-if [ $# -eq 0 ]
+# ensure there isn't an alias set with the same name.
+unalias d 2>/dev/null
+if [ "$?" -eq "0" ]
 then
-    sed -e "s/alias DIR_\(.*\)=\"cd \(.*\)\"/\1 = \2/" < $mapFile
-elif [ $# -gt 2 ]
-then
-    usage
-else
+    printf "Existing alias 'd' was removed while setting up quick directory function d()\n"
+    printf "You may want to clear the contents of ~/.dmap if you were using a previous version of this script\n"
+fi
 
-    while [ $# -gt 0 ]
-    do
-        case "$1" in
-            +) addDir=true;;
-            -) removeDir=true;;
-            -h) finished=true;;
-            -*) finished=true;;
-            *) aliasName=$1; break;;	# terminate while loop
-        esac
-        shift
-    done
+d()
+{
+    mapFile=~/.dmap
 
-    if $finished;
+    touch "$mapFile"
+
+    done=false
+    curDir=`pwd`
+    addDir=false
+    removeDir=false
+    aliasName=
+    finished=false # an awkward workaround for not calling exit
+
+    if [ "$#" -eq "0" ]
     then
-        usage
-    elif [ -z "$aliasName" ]
+        cat $mapFile
+    elif [ "$#" -gt "2" ]
     then
-        usage
+        _d_usage
     else
 
-#        echo "Commands are $addDir $removeDir $aliasName $curDir"
+        while [ "$#" -gt "0" ]
+        do
+            case "$1" in
+                +) addDir=true;;
+                -) removeDir=true;;
+                -h) finished=true;;
+                -*) finished=true;;
+                *) aliasName=$1; break;;	# terminate while loop
+            esac
+            shift
+        done
 
-        if $addDir;
+        if $finished;
         then
-            grep "alias DIR_$aliasName=" < $mapFile > /dev/null
-            if [ $? -eq 0 ]
-            then
-                echo "The map alias $aliasName already exists"
-            else
-                #Write the new alias to our map file
-                echo "alias DIR_$aliasName=\"cd $curDir\"" >> $mapFile
-
-                #Update the current env
-                alias DIR_$aliasName="cd $curDir"
-            fi
-
-        elif $removeDir;
+            _d_usage
+        elif [ -z "$aliasName" ]
         then
-            sed -i -e "/alias DIR_$aliasName=.*/d" $mapFile
-            if [ $? -eq 0 ]
-            then
-                echo "$aliasName successfully removed"
-            else
-                echo "$aliasName not found" #won't get run, sed always true
-            fi
+            _d_usage
         else
-           grep "alias DIR_$aliasName=" < $mapFile > /dev/null
-           if [ $? -eq 1 ]
-           then
-               echo "The map alias $aliasName not found"
-           else
-               . ~/.dmap
-               aliasCmd=`alias DIR_$aliasName`
-               cmd=`echo $aliasCmd | sed "s/alias DIR_.*='\(.*\)'/\1/"`
-               $cmd
-               echo $cmd
-           fi
+            aliasRow=`grep "^$aliasName = " $mapFile`
+            if $addDir;
+            then
+                if [ -z "$aliasRow" ]
+                then
+                    #Write the new alias to our map file
+                    printf "$aliasName = $curDir\n" >> $mapFile
+                else
+                    printf "The map alias $aliasName already exists:\n$aliasRow\n"
+                fi
+            else
+                if [ -z "$aliasRow" ]
+                then
+                    printf "The alias '$aliasName' does not exist\n"
+                elif $removeDir;
+                then
+                    sed -i -e "/^$aliasName = .*/d" $mapFile
+                    if [ "$?" -eq "0" ]
+                    then
+                        printf "$aliasName successfully removed\n"
+                    else
+                        printf "Error removing $aliasName\n"
+                    fi
+                else
+                    cmd=`printf "$aliasRow" | sed -e "s,.* = \(.*\),\1,"`
+                    cd $cmd
+                    printf "cd $cmd\n"
+                fi
+            fi
         fi
-     fi
- fi
+    fi
+}
 

@@ -1,12 +1,40 @@
 # Quick Directory Aliases
 
-## What it does
-
 Enables quick directory aliases and navigation. Allows for easy and consistent navigation between disparate directories.
 
-## How you use it
+## Table of Contents
+**[Installation](#installation)**<br>
+**[Usage](#usage)**<br>
+**[Supported Environments](#supported-environments)**<br>
+**[Implementation Details](#implementation-details)**<br>
+**[License](#license)**<br>
 
-#### Add alias
+
+## Installation
+
+1. Download the [script](https://github.com/mcwoodle/shell-directory-management/blob/master/quick-directory-aliases.sh)
+1. Source the script into your current shell (add this to your shell startup script to always have the command available)
+1. Done
+
+#### Quick setup commands
+
+```bash
+RC_FILE=~/.bashrc
+SCRIPT_DIRECTORY=~/scripts
+
+mkdir -p $SCRIPT_DIRECTORY
+wget -O $SCRIPT_DIRECTORY/quick-directory-aliases.sh https://raw.githubusercontent.com/mcwoodle/shell-directory-management/master/quick-directory-aliases.sh
+printf "\n. $SCRIPT_DIRECTORY/quick-directory-aliases.sh\n" >> $RC_FILE
+. $RC_FILE
+```
+
+> Change the RC_FILE to match your preferred shell's rc file, or any other file that you source when a new shell/terminal is created.
+
+> The default name for the command is "d". Edit the `quick-directory-aliases.sh` script and change the function name `d()` to a name of your choosing.
+
+## Usage
+
+#### Add an alias
 ```bash
 % cd /any/really/long/or/short/directory/path/thats/hardoreasy/to/remember
 % d + shortAliasName
@@ -21,7 +49,7 @@ Enables quick directory aliases and navigation. Allows for easy and consistent n
 /any/really/long/or/short/directory/path/thats/hardoreasy/to/remember
 ```
 
-#### Remove alias
+#### Remove an alias
 ```bash
 % d - shortAliasName
 ```
@@ -30,25 +58,22 @@ Enables quick directory aliases and navigation. Allows for easy and consistent n
 ```bash
 % d
 workspace = /home/mcwoodle/workspaces/someWorkspaceDirectory
+bin = /usr/bin
+nhl = /home/mcwoodle/go/leafs/go
 ```
 
+## Supported Environments
 
-## How to install
+This script uses standard sh and will work with any POSIX compliant shell. It's been tested with sh, bash, ksh, zsh, dash and been used on macOS, RHEL5, Ubuntu, and Bash on Ubuntu on Windows.
 
-1. Copy the file `quick-directory-aliases.sh` to a local directory (Download [here](https://raw.githubusercontent.com/mcwoodle/shell-directory-management/master/quick-directory-aliases.sh) - right click, save as...)
-   > Lets call this directory YOUR_LOCAL_DIRECTORY_PATH
-1. Add the following alias to your shell's rc file, or wherever you put your aliases:
+> C shell, tcsh/csh, are not POSIX compliant and therefore not supported.
 
-    ```bash
-    alias d='. <YOUR_LOCAL_DIRECTORY_PATH>/quick-directory-aliases.sh'
-    ```
-    > Dont forget the `.`; sourcing this script here is crucial to its functionality
-1. Ready for use.
-
-> Note that this uses standard sh and will work on any POSIX compliant system. To date, it's been used on macOS, RHEL5, Ubuntu, and Bash on Ubuntu on Windows.
-
+> ksh on Bash On Ubuntu On Windows, along with being a mouthful, does not work due to a "cannot create pipe [Operation not permitted]" error when piping output to sed. 
 
 ## Implementation Details
 * The script is sourced into your current working shell, allowing it to issue change directory commands within your shell.
+* A function will be defined named 'd' in the current shell's context. If there is an alias with this name it will be removed.
 * It creates and uses a `~/.dmap` file to store a map of aliases to directories.
 
+## License
+Licensed under the Apache License, Version 2.0.
