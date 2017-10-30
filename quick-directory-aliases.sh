@@ -18,6 +18,15 @@
 
 # NOTE: will be sourced by interactive shell and will affect the caller's context, do not exit!
 
+_d_mapFile=~/.dmap
+
+touch "$_d_mapFile"
+
+# Shells used for auto-complete (matches suffix against 'echo $0')
+_d_binBashSuffix="bash"
+_d_binZshSuffix="zsh"
+
+
 _d_usage()
 {
     printf "usage: d [+|-] [alias]\n" >&2
@@ -42,74 +51,80 @@ fi
 
 d()
 {
-    mapFile=~/.dmap
+    _d_curDir=`pwd`
+    _d_addDir=false
+    _d_removeDir=false
+    _d_aliasName=
+    _d_finished=false # an awkward workaround for not calling exit
 
-    touch "$mapFile"
-
-    done=false
-    curDir=`pwd`
-    addDir=false
-    removeDir=false
-    aliasName=
-    finished=false # an awkward workaround for not calling exit
-
+    # Check for args length
     if [ "$#" -eq "0" ]
     then
-        cat $mapFile
+        cat $_d_mapFile
+        return 0
     elif [ "$#" -gt "2" ]
     then
         _d_usage
-    else
+        return 1
+    fi
 
-        while [ "$#" -gt "0" ]
-        do
-            case "$1" in
-                +) addDir=true;;
-                -) removeDir=true;;
-                -h) finished=true;;
-                -*) finished=true;;
-                *) aliasName=$1; break;;	# terminate while loop
-            esac
-            shift
-        done
+    # Handle arguments
+    while [ "$#" -gt "0" ]
+    do
+        case "$1" in
+            +) _d_addDir=true;;
+            -) _d_removeDir=true;;
+            -h) _d_usage; return 0;;
+            -*) _d_usage; return 1;;
+            *) _d_aliasName=$1; break;;	# terminate while loop
+        esac
+        shift
+    done
 
-        if $finished;
+    if [ -z "$_d_aliasName" ]
+    then
+        _d_usage
+        return 1
+    fi
+
+    _d_aliasRow=`grep "^$_d_aliasName = " $_d_mapFile`
+
+    if $_d_addDir;
+    then
+        if [ -z "$_d_aliasRow" ]
         then
-            _d_usage
-        elif [ -z "$aliasName" ]
-        then
-            _d_usage
+            #Write the new alias to our map file
+            printf "$_d_aliasName = $_d_curDir\n" >> $_d_mapFile
+            return $?
         else
-            aliasRow=`grep "^$aliasName = " $mapFile`
-            if $addDir;
-            then
-                if [ -z "$aliasRow" ]
-                then
-                    #Write the new alias to our map file
-                    printf "$aliasName = $curDir\n" >> $mapFile
-                else
-                    printf "The map alias $aliasName already exists:\n$aliasRow\n"
-                fi
-            else
-                if [ -z "$aliasRow" ]
-                then
-                    printf "The alias '$aliasName' does not exist\n"
-                elif $removeDir;
-                then
-                    sed -i -e "/^$aliasName = .*/d" $mapFile
-                    if [ "$?" -eq "0" ]
-                    then
-                        printf "$aliasName successfully removed\n"
-                    else
-                        printf "Error removing $aliasName\n"
-                    fi
-                else
-                    cmd=`printf "$aliasRow" | sed -e "s,.* = \(.*\),\1,"`
-                    cd $cmd
-                    printf "cd $cmd\n"
-                fi
-            fi
+            printf "The map alias $_d_aliasName already exists:\n$_d_aliasRow\n"
+            return 1
         fi
     fi
+
+    if [ -z "$_d_aliasRow" ]
+    then
+        printf "The alias '$_d_aliasName' does not exist\n"
+        return 1
+    fi
+
+    if $_d_removeDir;
+    then
+        sed -i -e "/^$_d_aliasName = .*/d" $_d_mapFile
+        if [ "$?" -eq "0" ]
+        then
+            printf "$_d_aliasName successfully removed\n"
+            return $?
+        else
+            printf "Error removing $_d_aliasName\n"
+            return 1
+        fi
+    fi
+
+    # Actually change the directory.
+    _d_cmd=`printf "$_d_aliasRow" | sed -e "s,.* = \(.*\),\1,"`
+    printf "cd $_d_cmd\n"
+    cd $_d_cmd
+    return $?
 }
 
