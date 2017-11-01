@@ -31,7 +31,7 @@ _d_usage()
     printf "Navigate: d aliasName\n" >&2
     printf "List all: d\n" >&2
     printf "\n" >&2
-    printf "Version: 1.1\n" >&2
+    printf "Version: 1.2\n" >&2
     printf "\n" >&2
     printf "Full README: https://github.com/mcwoodle/shell-directory-management/blob/master/README.md\n" >&2
 }
