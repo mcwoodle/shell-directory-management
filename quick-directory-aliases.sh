@@ -119,7 +119,7 @@ d()
     # Actually change the directory.
     _d_cmd=`printf "$_d_aliasRow" | sed -e "s,.* = \(.*\),\1,"`
     printf "cd $_d_cmd\n"
-    cd $_d_cmd
+    cd "$_d_cmd"
     return $?
 }
 
