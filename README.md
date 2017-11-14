@@ -19,6 +19,8 @@ Enables quick directory aliases and navigation. Allows for easy and consistent n
 
 #### Quick setup commands
 
+> Note: Before running the following, change `RC_FILE` to match your preferred shell's rc file, or any other file that you source when a new shell/terminal is created.
+
 ```bash
 RC_FILE=~/.bashrc
 SCRIPT_DIRECTORY=~/scripts
@@ -28,8 +30,6 @@ wget -O $SCRIPT_DIRECTORY/quick-directory-aliases.sh https://raw.githubuserconte
 printf "\n. $SCRIPT_DIRECTORY/quick-directory-aliases.sh\n" >> $RC_FILE
 . $RC_FILE
 ```
-
-> Change the RC_FILE to match your preferred shell's rc file, or any other file that you source when a new shell/terminal is created.
 
 > The default name for the command is "d". Edit the `quick-directory-aliases.sh` script and change the function name `d()` to a name of your choosing.
 
