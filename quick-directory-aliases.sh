@@ -90,7 +90,9 @@ d()
         then
             #Write the new alias to our map file
             printf "$_d_aliasName = $_d_curDir\n" >> $_d_mapFile
-            return $?
+            retVal=$?
+            _d_configureAutoComplete
+            return $retVal
         else
             printf "The map alias $_d_aliasName already exists:\n$_d_aliasRow\n"
             return 1
@@ -109,7 +111,9 @@ d()
         if [ "$?" -eq "0" ]
         then
             printf "$_d_aliasName successfully removed\n"
-            return $?
+            retVal=$?
+            _d_configureAutoComplete
+            return $retVal
         else
             printf "Error removing $_d_aliasName\n"
             return 1
@@ -131,30 +135,35 @@ d()
 # Inspiration for the zsh/bash autocomplete impl from:
 # http://jeroenjanssens.com/2013/08/16/quickly-navigate-your-filesystem-from-the-command-line.html
 
-# For zsh, test if the compctl command exists.
-if type compctl >/dev/null 2>&1
-then
-    _d_setupAutoComplete_zsh()
-    {
-        # Note: Use eval to avoid breaking 'sh' posix or shells
-        eval "reply=($(sed -e 's/\(.*\) = .*/\1/' $_d_mapFile))"
-        return 0
-    }
-    compctl -K _d_setupAutoComplete_zsh d >/dev/null 2>&1
-fi
+_d_configureAutoComplete()
+{
 
-# For bash, test if the compgen/complete commands exists
-if type compgen >/dev/null 2>&1
-then
-    _d_setupAutoComplete_bash()
-    {
-        local curw=${COMP_WORDS[COMP_CWORD]}
-        local wordlist=$(sed -e "s/\(^.*\) = .*/\1/" $_d_mapFile)
-        # Note: Use eval to avoid breaking 'sh' posix or shells
-        eval "COMPREPLY=($(compgen -W "$wordlist" -- "$curw"))"
-        return 0
-    }
+    # For zsh, test if the compctl command exists.
+    if type compctl >/dev/null 2>&1
+    then
+        _d_setupAutoComplete_zsh()
+        {
+            # Note: Use eval to avoid breaking 'sh' posix or shells
+            eval "reply=($(sed -e 's/\(.*\) = .*/\1/' $_d_mapFile))"
+            return 0
+        }
+        compctl -K _d_setupAutoComplete_zsh d >/dev/null 2>&1
+    fi
 
-    complete -F _d_setupAutoComplete_bash d >/dev/null 2>&1
-fi
+    # For bash, test if the compgen/complete commands exists
+    if type compgen >/dev/null 2>&1
+    then
+        _d_setupAutoComplete_bash()
+        {
+            local curw=${COMP_WORDS[COMP_CWORD]}
+            local wordlist=$(sed -e "s/\(^.*\) = .*/\1/" $_d_mapFile)
+            # Note: Use eval to avoid breaking 'sh' posix or shells
+            eval "COMPREPLY=($(compgen -W "$wordlist" -- "$curw"))"
+            return 0
+        }
 
+        complete -F _d_setupAutoComplete_bash d >/dev/null 2>&1
+    fi
+}
+
+_d_configureAutoComplete
