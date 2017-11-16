@@ -34,6 +34,8 @@ _d_usage()
     printf "Version: 1.2\n" >&2
     printf "\n" >&2
     printf "Full README: https://github.com/mcwoodle/shell-directory-management/blob/master/README.md\n" >&2
+
+    _d_setupAutoComplete
 }
 
 # ensure there isn't an alias set with the same name.
@@ -56,6 +58,7 @@ d()
     if [ "$#" -eq "0" ]
     then
         cat $_d_mapFile
+        _d_setupAutoComplete
         return 0
     elif [ "$#" -gt "2" ]
     then
@@ -91,7 +94,7 @@ d()
             #Write the new alias to our map file
             printf "$_d_aliasName = $_d_curDir\n" >> $_d_mapFile
             retVal=$?
-            _d_configureAutoComplete
+            _d_setupAutoComplete
             return $retVal
         else
             printf "The map alias $_d_aliasName already exists:\n$_d_aliasRow\n"
@@ -112,7 +115,7 @@ d()
         then
             printf "$_d_aliasName successfully removed\n"
             retVal=$?
-            _d_configureAutoComplete
+            _d_setupAutoComplete
             return $retVal
         else
             printf "Error removing $_d_aliasName\n"
@@ -151,18 +154,20 @@ _d_setupAutoComplete_bash()
     return 0
 }
 
-_d_configureAutoComplete()
+_d_setupAutoComplete()
 {
 
     # For zsh, test if the compctl command exists.
     if type compctl >/dev/null 2>&1
     then
+        _d_setupAutoComplete_zsh
         compctl -K _d_setupAutoComplete_zsh d >/dev/null 2>&1
     # For bash, test if the compgen/complete commands exists
     elif type compgen >/dev/null 2>&1
     then
+        _d_setupAutoComplete_bash
         complete -F _d_setupAutoComplete_bash d >/dev/null 2>&1
     fi
 }
 
-_d_configureAutoComplete
+_d_setupAutoComplete
