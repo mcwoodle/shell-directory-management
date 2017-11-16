@@ -135,33 +135,32 @@ d()
 # Inspiration for the zsh/bash autocomplete impl from:
 # http://jeroenjanssens.com/2013/08/16/quickly-navigate-your-filesystem-from-the-command-line.html
 
+_d_setupAutoComplete_zsh()
+{
+    # Note: Use eval to avoid breaking 'sh' posix or shells
+    eval "reply=($(sed -e 's/\(.*\) = .*/\1/' $_d_mapFile))"
+    return 0
+}
+
+_d_setupAutoComplete_bash()
+{
+    local curw=${COMP_WORDS[COMP_CWORD]}
+    local wordlist=$(sed -e "s/\(^.*\) = .*/\1/" $_d_mapFile)
+    # Note: Use eval to avoid breaking 'sh' posix or shells
+    eval "COMPREPLY=($(compgen -W "$wordlist" -- "$curw"))"
+    return 0
+}
+
 _d_configureAutoComplete()
 {
 
     # For zsh, test if the compctl command exists.
     if type compctl >/dev/null 2>&1
     then
-        _d_setupAutoComplete_zsh()
-        {
-            # Note: Use eval to avoid breaking 'sh' posix or shells
-            eval "reply=($(sed -e 's/\(.*\) = .*/\1/' $_d_mapFile))"
-            return 0
-        }
         compctl -K _d_setupAutoComplete_zsh d >/dev/null 2>&1
-    fi
-
     # For bash, test if the compgen/complete commands exists
-    if type compgen >/dev/null 2>&1
+    elif type compgen >/dev/null 2>&1
     then
-        _d_setupAutoComplete_bash()
-        {
-            local curw=${COMP_WORDS[COMP_CWORD]}
-            local wordlist=$(sed -e "s/\(^.*\) = .*/\1/" $_d_mapFile)
-            # Note: Use eval to avoid breaking 'sh' posix or shells
-            eval "COMPREPLY=($(compgen -W "$wordlist" -- "$curw"))"
-            return 0
-        }
-
         complete -F _d_setupAutoComplete_bash d >/dev/null 2>&1
     fi
 }
